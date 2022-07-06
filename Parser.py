@@ -15,15 +15,15 @@ class Parser:
 
   def prog(self):
     self.root.set_info("PROG")
-    self.root.add_childs(self.dcls())
-    self.root.add_childs(self.stmts())
+    self.root.add_children(self.dcls())
+    self.root.add_children(self.stmts())
     
   def dcls(self):
-    childs = []
+    children = []
     if self.tokens.peek() == "floatdcl" or self.tokens.peek() == "intdcl":
-      childs += self.dcl()
-      childs += self.dcls()
-    return childs
+      children += self.dcl()
+      children += self.dcls()
+    return children
 
   def dcl(self):
     type = ""
@@ -37,14 +37,14 @@ class Parser:
     return [Node(type, val)]
 
   def stmts(self):
-    childs = []
+    children = []
     if self.tokens.peek() == "id" or self.tokens.peek() == "print":
-      childs += self.stmt()
-      childs += self.stmts()
+      children += self.stmt()
+      children += self.stmts()
     else:
       if self.tokens.peek() != "$":
         self.error()
-    return childs
+    return children
 
   def stmt(self):
     token = None
@@ -53,9 +53,9 @@ class Parser:
       token = self.tokens.match("id")
       self.tokens.match("assign")
       node.set_info("assign")
-      node.add_childs([Node(token["type"], token["val"])])
+      node.add_children([Node(token["type"], token["val"])])
       val_node = self.val()
-      node.add_childs(self.expr(val_node))
+      node.add_children(self.expr(val_node))
     else:
       if self.tokens.peek() == "print":
         self.tokens.match("print")
@@ -70,10 +70,10 @@ class Parser:
     current = self.tokens.peek()
     if current == "plus" or current == "minus": 
       node = Node(current)
-      node.add_childs(val_node)
+      node.add_children(val_node)
       self.tokens.match(current)
       next_val = self.val()
-      node.add_childs(self.expr(next_val))
+      node.add_children(self.expr(next_val))
     if node is not None:
       return [node]
     return val_node

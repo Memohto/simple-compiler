@@ -5,6 +5,8 @@ class Stack:
     self.content = content
   
   def peek(self):
+    if self.eof():
+      return "$"
     return self.content[0]
 
   def advance(self):
