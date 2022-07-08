@@ -1,3 +1,5 @@
+import copy
+
 class Node:
   children = None
 
@@ -27,8 +29,6 @@ class Node:
       self.data_type = self.consistent(self.children[0], self.children[1])
     elif self.type == 'assign':
       self.data_type = self.convert(self.children[1], self.children[0].data_type)
-    
-    
       
   def generalize(self, type_1, type_2):
     type = ""
@@ -46,20 +46,57 @@ class Node:
 
   def convert(self, node, type):
     if node.data_type == 'int' and type == 'float':
-      print("Converting")
-      temp_type = node.type
-      temp_val = node.val
-      tem_data_type = node.data_type
+      temp_node = copy.deepcopy(node)
 
       node.type = "int2float"
       node.val = ""
       node.data_type = "float"
-      node.add_children([Node(temp_type, temp_val, tem_data_type)])
-      print(node)
+      node.children = []
+      node.add_children([temp_node])
       return 'float'
     elif node.data_type == 'float' and type == 'int':
       self.error()
     return type
+
+  def generate_code(self):
+    instructions = []
+    for child in self.children:
+      _, _, new_instructions = child.generate_child_code()
+      instructions += new_instructions
+      
+    return instructions
+
+  def generate_child_code(self, reg_num = 0):
+    register = 'r'+str(reg_num)
+    current_num = reg_num
+    instructions = []
+    new_instructions = []
+
+    if self.type in ['floatdcl', 'intdcl', 'print']:
+      register = self.val
+      instructions.append(self.type + ' ' + self.val)
+      current_num -= 1
+    elif self.type in ['fnum', 'inum', 'id']:
+      register = self.val
+      current_num -= 1
+    elif self.type == 'int2float':
+      register = 'r'+str(current_num)
+      right_register, current_num, new_instructions = self.children[0].generate_child_code(current_num + 1)
+      instructions.append(register + ' = ' + self.type + ' ' + right_register)
+    elif self.type == 'plus' or self.type == 'minus':
+      register = 'r'+str(current_num)
+      left_register, current_num, left_instructions = self.children[0].generate_child_code(current_num + 1)
+      right_register, current_num, right_instructions = self.children[1].generate_child_code(current_num + 1)
+      new_instructions = new_instructions + left_instructions + right_instructions
+      if self.type == 'plus':
+        instructions.append(register + ' = ' + left_register + ' + ' + right_register)
+      else:
+        instructions.append(register + ' = ' + left_register + ' - ' + right_register)
+    elif self.type == 'assign':
+      prev_register, current_num, new_instructions = self.children[1].generate_child_code(current_num + 1)
+      instructions.append(self.children[0].val + ' = ' + prev_register)
+    
+    return register, current_num, new_instructions + instructions
  
   def error(self):
     print("Semantic error: Illegal type conversion")

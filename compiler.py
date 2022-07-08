@@ -6,9 +6,10 @@ from SymbolTable import SymbolTable
 from Scanner import Scanner
 from Parser import Parser
 
+# Input
 f = open("input.txt", "r")
-
 stack = Stack(list(f.read()))
+f.close()
 
 # Scanner
 scanner = Scanner(stack)
@@ -32,5 +33,12 @@ print("Symbol table: \n", symbol_table, "\n")
 tree.type_check(symbol_table)
 print("Tree: \n", tree, "\n") 
 
+# Code generation
+instructions = tree.generate_code()
+
+# Output
+f = open("output.txt", "w")
+for line in instructions:
+  f.write(line+'\n')
 f.close()
   
